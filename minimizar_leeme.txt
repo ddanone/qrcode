@@ -1,0 +1,56 @@
+Para minimizar el script:
+
+https://terser.org/docs/cli-usage/
+
+Desde command line (teniendo instalado node): 
+npm install terser -g
+
+Minimizar:
+terser --compress --mangle --source-map --output "QRCode-minified.js" -- "QRCode copy.js"
+
+Archivo comprimido con BROTLI
+
+El archivo QRCode.min.js.br ha sido comprimido con brotli : https://brotli.myl.moe/
+El archivo QRCode.min.js.gz ha sido comprimido con brotli : https://gzip.swimburger.net/
+
+Para que el apache lo pueda servir:
+
+- En el html:  <script src="QRCode.min.js"></script>
+- En el Apache:
+    1.- Activar módulos necesarios:
+        a2enmod rewrite
+        a2enmod headers
+        a2enmod brotli
+    2.- .htaccess o VirtualHost
+        Brotli (prioridad)
+            AddEncoding br .br
+            AddType application/javascript .js
+
+            <IfModule mod_brotli.c>
+                BrotliCompressionQuality 6
+            </IfModule>
+
+            RewriteEngine On
+            RewriteCond %{HTTP:Accept-Encoding} br
+            RewriteCond %{REQUEST_FILENAME}.br -f
+            RewriteRule ^(.*)\.js$ $1.js.br [L]
+        Gzip (fallback)
+            AddEncoding gzip .gz
+
+            RewriteCond %{HTTP:Accept-Encoding} gzip
+            RewriteCond %{REQUEST_FILENAME}.gz -f
+            RewriteRule ^(.+)\.js$ $1.js.gz [L]
+    3.- Headers recomendados
+        <IfModule mod_headers.c>
+            Header append Vary Accept-Encoding
+        </IfModule>
+
+- O con Nginx
+        brotli on;
+        brotli_static on;
+
+        brotli_types
+        application/javascript
+        text/css
+        text/html;
+
